@@ -31,3 +31,12 @@ class Combatant():
 		
 		map[(ord(self.x) - 96)][self.y] = self
 		print(map)
+
+class GameState():
+	def __init__(self):
+		self.started = False
+		self.looking = False
+		self.combatants = []
+		self.map = [[0 for i in range(10)] for j in range(10)]
+		self.current_turn = 0
+		self.current_round = 0

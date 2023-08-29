@@ -9,10 +9,10 @@ import random
 if __name__ == '__main__':
 	intents = discord.Intents.default()
 	intents.message_content = True
-	started = False
-	looking = False
 
 	bot = commands.Bot(command_prefix='//', intents=intents)
+	started = False
+	looking = False
 	combatants = []
 	map = [[0 for i in range(10)] for j in range(10)]
 	current_turn = 0
