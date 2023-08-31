@@ -23,7 +23,6 @@ if __name__ == '__main__':
 		url = battlemap.get_url() + "10x10"
 		for i in combatants:
 			url = url + i.put_in_map()
-		print(url)
 		emb.set_image(url=url)
 		return emb
 	
@@ -32,13 +31,16 @@ if __name__ == '__main__':
 		shortcode = battlemap.get_shortcode(user.avatar.url)
 		x = chr(random.randint(1, 10) + 96)
 		y = random.randint(1, 10)
-		invoker = combatant.Combatant(user, shortcode, x, y, map)
+		invoker = arena.Combatant(user, shortcode, x, y, map)
 		combatants.append(invoker)
 
 	def user_in_combat(user):
 		for i in combatants:
 			if i.user == user:
 				return True
+
+	def check_win():
+		pass
 
 	def end_turn():
 		global current_turn
@@ -59,7 +61,6 @@ if __name__ == '__main__':
 		global started
 		global looking
 		global current_round
-		print(map)
 	
 		if not looking:
 			looking = True
@@ -91,13 +92,55 @@ if __name__ == '__main__':
 			await ctx.send(f"{ctx.author.mention}, it's not your turn!")
 	
 	@bot.command()
+	async def attack(ctx, dir):
+		if combatants[current_turn].user == ctx.author:
+			attacker = combatants[current_turn]
+			target = [0, 0]
+			match dir:
+				case "up":
+					attacker_pos = attacker.get_position()
+					target[0] = attacker_pos[0]
+					target[1] = attacker_pos[1] - 1
+
+				case "down":
+					attacker_pos = attacker.get_position()
+					target[0] = attacker_pos[0]
+					target[1] = attacker_pos[1] + 1
+
+				case "left":
+					attacker_pos = attacker.get_position()
+					target[0] = attacker_pos[0] - 1
+					target[1] = attacker_pos[1]
+
+				case "right":
+					attacker_pos = attacker.get_position()
+					target[0] = attacker_pos[0] + 1
+					target[1] = attacker_pos[1]
+
+				case _:
+					await ctx.send("Invalid direction, please use 'up', 'down', 'left', or 'right'")
+					return
+			
+			for i in combatants:
+				if i.get_position() == target:
+					print(i.get_position)
+					print("---------------")
+					print(target)
+					i.hp -= 2
+					end_turn()
+					await ctx.send(f"{ctx.author.mention} hit {i.user.mention} for 2 damage!", embed=update_map())
+					return
+			
+				await ctx.send("no target in that direction")
+	
+	@bot.command()
 	async def join(ctx):
 		global looking
 	
 		if looking:
 			if not user_in_combat(ctx.author) and (len(combatants) < 4):
 				add_combatant(ctx.author)
-				await ctx.send(f"Use {ctx.author.mention} has been added in combat.")
+				await ctx.send(f"User {ctx.author.mention} has been added in combat.")
 			else:
 				await ctx.send(f"User {ctx.author.mention} already in combat, or participants already at 4!")
 		else:
