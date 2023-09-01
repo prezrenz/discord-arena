@@ -8,7 +8,7 @@ class Combatant():
 		self.y = y
 		self.mov = 4
 		self.act = 2
-		self.hp = 12
+		self.hp = 4
 		x_num = ord(self.x) - 96
 		map[int(x_num) - 1][self.y - 1] = self
 		
@@ -16,6 +16,10 @@ class Combatant():
 	
 	def get_position(self):
 		return [ord(self.x) - 96, self.y]
+	
+	def reset_action(self):
+		self.act = 2
+		self.mov = 4
 	
 	def put_in_map(self):
 		return f"/{self.x}{self.y}~{self.shortcode}"

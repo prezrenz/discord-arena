@@ -19,7 +19,7 @@ if __name__ == '__main__':
 	current_round = 0
 
 	def update_map():
-		emb = discord.Embed(description=f"Current Turn:{combatants[current_turn].user.mention}\nCurrent Round:{current_round}")
+		emb = discord.Embed(description=f"Current Turn:{combatants[current_turn].user.mention}\nCurrent Round:{current_round}\nCurrent Actions Left:{combatants[current_turn].act}")
 		url = battlemap.get_url() + "10x10"
 		for i in combatants:
 			url = url + i.put_in_map()
@@ -39,8 +39,22 @@ if __name__ == '__main__':
 			if i.user == user:
 				return True
 
-	def check_win():
-		pass
+	async def set_win(ctx):
+		started = False
+		looking = False
+		current_turn = 0
+		current_round = 0
+		
+		await ctx.send(f"{ctx.author.mention} has won!", embed=update_map())
+		await ctx.send("Battle Ended...")
+		combatants.clear()
+
+	def check_actions_left():
+		if combatants[current_turn].act > 1:
+			combatants[current_turn].act -= 1
+		else:
+			combatants[current_turn].act -= 1
+			end_turn()
 
 	def end_turn():
 		global current_turn
@@ -49,6 +63,8 @@ if __name__ == '__main__':
 		if (current_turn + 1) >= len(combatants):
 			current_round += 1
 			current_turn = 0
+			for i in combatants:
+				i.reset_action()
 		else:
 			current_turn += 1
 
@@ -84,7 +100,7 @@ if __name__ == '__main__':
 		if combatants[current_turn].user == ctx.author:
 			if (abs(x) + abs(y)) <= combatants[current_turn].mov:
 				combatants[current_turn].move(x, y, map)
-				end_turn()
+				check_actions_left()
 				await ctx.send(embed=update_map())
 			else:
 				await ctx.send(f"{ctx.author.mention}, you tried moving more than {combatants[current_turn].mov} squares! Please try again...")
@@ -123,16 +139,23 @@ if __name__ == '__main__':
 			
 			for i in combatants:
 				if i.get_position() == target:
-					print(i.get_position)
-					print("---------------")
-					print(target)
 					i.hp -= 2
-					end_turn()
-					await ctx.send(f"{ctx.author.mention} hit {i.user.mention} for 2 damage!", embed=update_map())
+					check_actions_left()
+					
+					for i in combatants:
+						if i.hp <= 0:
+							combatants.remove(i)
+					if len(combatants) <= 1:
+						await ctx.send(f"{ctx.author.mention} hit {i.user.mention} for 2 damage!", embed=update_map())
+						await set_win(ctx)
+					else:
+						await ctx.send(f"{ctx.author.mention} hit {i.user.mention} for 2 damage!", embed=update_map())
 					return
 			
-				await ctx.send("no target in that direction")
-	
+			await ctx.send("no target in that direction")
+		else:
+			await ctx.send(f"{ctx.author.mention}, it's not your turn!")
+
 	@bot.command()
 	async def join(ctx):
 		global looking
