@@ -38,6 +38,11 @@ class Combatant():
 		
 		map[(ord(self.x) - 96 - 1)][self.y - 1] = self
 
+class  Weapon():
+	def __init__(self, damage, range):
+		self.damage = damage
+		self.range = range
+
 class GameState():
 	def __init__(self):
 		self.started = False
