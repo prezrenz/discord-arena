@@ -5,6 +5,13 @@ import arena
 import battlemap
 import random
 
+weapons_data = [
+	{"name": "fist", "damage": 1, "range": 1},
+	{"name": "dagger", "damage": 2, "range": 1},
+	{"name": "rapier", "damage": 3, "range": 1},
+	{"name": "axe", "damage": 3, "range": 1},
+	{"name": "spear", "damage": 2, "range": 2},
+]
 
 if __name__ == '__main__':
 	intents = discord.Intents.default()
@@ -14,6 +21,7 @@ if __name__ == '__main__':
 	started = False
 	looking = False
 	combatants = []
+	weapons = []
 	map = [[0 for i in range(10)] for j in range(10)]
 	current_turn = 0
 	current_round = 0
@@ -22,6 +30,8 @@ if __name__ == '__main__':
 		emb = discord.Embed(description=f"Current Turn:{combatants[current_turn].user.mention}\nCurrent Round:{current_round}\nCurrent Actions Left:{combatants[current_turn].act}")
 		url = battlemap.get_url() + "10x10"
 		for i in combatants:
+			url = url + i.put_in_map()
+		for i in weapons:
 			url = url + i.put_in_map()
 		emb.set_image(url=url)
 		return emb
@@ -33,6 +43,17 @@ if __name__ == '__main__':
 		y = random.randint(1, 10)
 		invoker = arena.Combatant(user, shortcode, x, y, map)
 		combatants.append(invoker)
+
+	def generate_weapons():
+		generate = 4
+		
+		while generate > 0:
+			x = random.randint(1, 10)
+			y = random.randint(1, 10)
+			data = weapons_data[random.randint(1, 4)]
+			if not isinstance(map[x-1][y-1], arena.Combatant):
+				weapons.append(arena.Weapon(data["name"], data["damage"], data["range"],  x, y, map))
+				generate -= 1
 
 	def user_in_combat(user):
 		for i in combatants:
@@ -86,7 +107,12 @@ if __name__ == '__main__':
 		elif looking and not started and (len(combatants) > 1):
 			started = True
 			looking = False
+			
+			current_turn = 0
+			current_round = 0
+			
 			random.shuffle(combatants)
+			generate_weapons()
 			current_round += 1
 			await ctx.send("Battle Started...",embed=update_map())
 		elif len(combatants) <= 1:
@@ -178,8 +204,7 @@ if __name__ == '__main__':
 			started = False
 			looking = False
 			combatants.clear()
-			current_turn = 0
-			current_round = 0
+			weapons.clear()
 			
 			await ctx.send("Battle Ended")
 		else:

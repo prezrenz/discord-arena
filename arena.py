@@ -39,9 +39,17 @@ class Combatant():
 		map[(ord(self.x) - 96 - 1)][self.y - 1] = self
 
 class  Weapon():
-	def __init__(self, damage, range):
+	def __init__(self, name, damage, range, x, y, map):
+		self.name = name
 		self.damage = damage
 		self.range = range
+		self.x = chr(x + 96)
+		self.y = y
+		
+		map[x-1][y-1] = self
+	
+	def put_in_map(self):
+		return f"/{self.x}{self.y}-{self.name}"
 
 class GameState():
 	def __init__(self):
