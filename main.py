@@ -5,6 +5,8 @@ import arena
 import battlemap
 import random
 
+from pprint import pprint
+
 weapons_data = [
 	{"name": "fist", "damage": 1, "range": 1},
 	{"name": "dagger", "damage": 2, "range": 1},
@@ -27,13 +29,20 @@ if __name__ == '__main__':
 	current_round = 0
 
 	def update_map():
-		emb = discord.Embed(description=f"Current Turn:{combatants[current_turn].user.mention}\nCurrent Round:{current_round}\nCurrent Actions Left:{combatants[current_turn].act}")
+		emb = discord.Embed(description=f"Current Turn:{combatants[current_turn].user.mention}\nCurrent Round:{current_round}\nCurrent Actions Left:{combatants[current_turn].act}\nEquipped:{combatants[current_turn].equip['name']}")
 		url = battlemap.get_url() + "10x10"
-		for i in combatants:
-			url = url + i.put_in_map()
-		for i in weapons:
-			url = url + i.put_in_map()
+		# for i in combatants:
+			# url = url + i.put_in_map()
+		# for i in weapons:
+			# url = url + i.put_in_map()
+		
+		for i in map:
+			for j in i:
+				if j != 0:
+					url = url + j.put_in_map()
+		
 		emb.set_image(url=url)
+		pprint(map)
 		return emb
 	
 	# TODO handle users with no avatar, doesnt work without avatar for now, returns error
@@ -50,9 +59,9 @@ if __name__ == '__main__':
 		while generate > 0:
 			x = random.randint(1, 10)
 			y = random.randint(1, 10)
-			data = weapons_data[random.randint(1, 4)]
-			if not isinstance(map[x-1][y-1], arena.Combatant):
-				weapons.append(arena.Weapon(data["name"], data["damage"], data["range"],  x, y, map))
+			data = weapons_data[random.randint(1, len(weapons_data)-1)]
+			if map[x-1][y-1] == 0:
+				weapons.append(arena.Weapon(data,  x, y, map))
 				generate -= 1
 
 	def user_in_combat(user):

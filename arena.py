@@ -1,6 +1,6 @@
 def clamp(num, min, max):
 	return min if num < min else max if num > max else num
-		
+
 class Combatant():
 	def __init__(self, user, shortcode, x, y, map):
 		self.user = user
@@ -9,6 +9,7 @@ class Combatant():
 		self.mov = 4
 		self.act = 2
 		self.hp = 4
+		self.equip = {"name": "fist", "damage": 1, "range": 1}
 		x_num = ord(self.x) - 96
 		map[int(x_num) - 1][self.y - 1] = self
 		
@@ -27,7 +28,6 @@ class Combatant():
 	def move(self, x, y, map):
 		map[(ord(self.x) - 96 - 1)][self.y - 1] = 0
 		
-		
 		self.y += int(y)
 		x_num = ord(self.x) - 96
 		x_num += int(x)
@@ -36,20 +36,22 @@ class Combatant():
 		self.x = chr(x_num + 96)
 		self.y = clamp(self.y, 1, 10)
 		
+		if isinstance(map[(ord(self.x) - 96 - 1)][self.y - 1], Weapon):
+			self.equip = map[(ord(self.x) - 96 - 1)][self.y - 1].data
+			map[(ord(self.x) - 96 - 1)][self.y - 1] = 0
+		
 		map[(ord(self.x) - 96 - 1)][self.y - 1] = self
 
 class  Weapon():
-	def __init__(self, name, damage, range, x, y, map):
-		self.name = name
-		self.damage = damage
-		self.range = range
+	def __init__(self, data, x, y, map):
+		self.data = data
 		self.x = chr(x + 96)
 		self.y = y
 		
 		map[x-1][y-1] = self
 	
 	def put_in_map(self):
-		return f"/{self.x}{self.y}-{self.name}"
+		return f"/{self.x}{self.y}-{self.data['name']}"
 
 class GameState():
 	def __init__(self):
