@@ -4,8 +4,7 @@ import os
 import arena
 import battlemap
 import random
-
-from pprint import pprint
+import helpers
 
 weapons_data = [
 	{"name": "fist", "damage": 1, "range": 1},
@@ -42,7 +41,6 @@ if __name__ == '__main__':
 					url = url + j.put_in_map()
 		
 		emb.set_image(url=url)
-		pprint(map)
 		return emb
 	
 	# TODO handle users with no avatar, doesnt work without avatar for now, returns error
@@ -141,53 +139,61 @@ if __name__ == '__main__':
 				await ctx.send(f"{ctx.author.mention}, you tried moving more than {combatants[current_turn].mov} squares! Please try again...")
 		else:
 			await ctx.send(f"{ctx.author.mention}, it's not your turn!")
-	
+
 	@bot.command()
 	async def attack(ctx, dir):
 		if combatants[current_turn].user == ctx.author:
+			print("attacking")
 			attacker = combatants[current_turn]
-			target = [0, 0]
+			attacker_pos = attacker.get_position()
+			
+			target = 0
+			x_off = 0
+			y_off = 0
+			
 			match dir:
 				case "up":
-					attacker_pos = attacker.get_position()
-					target[0] = attacker_pos[0]
-					target[1] = attacker_pos[1] - 1
-
+					x_off = 0
+					y_off = -1
 				case "down":
-					attacker_pos = attacker.get_position()
-					target[0] = attacker_pos[0]
-					target[1] = attacker_pos[1] + 1
-
+					x_off = 0
+					y_off = 1
 				case "left":
-					attacker_pos = attacker.get_position()
-					target[0] = attacker_pos[0] - 1
-					target[1] = attacker_pos[1]
-
+					x_off = -1
+					y_off = 0
 				case "right":
-					attacker_pos = attacker.get_position()
-					target[0] = attacker_pos[0] + 1
-					target[1] = attacker_pos[1]
-
+					x_off = 1
+					y_off = 0
 				case _:
 					await ctx.send("Invalid direction, please use 'up', 'down', 'left', or 'right'")
 					return
 			
-			for i in combatants:
-				if i.get_position() == target:
-					i.hp -= 2
-					check_actions_left()
-					
-					for i in combatants:
-						if i.hp <= 0:
-							combatants.remove(i)
-					if len(combatants) <= 1:
-						await ctx.send(f"{ctx.author.mention} hit {i.user.mention} for 2 damage!", embed=update_map())
-						await set_win(ctx)
-					else:
-						await ctx.send(f"{ctx.author.mention} hit {i.user.mention} for 2 damage!", embed=update_map())
-					return
+			for i in range(1, attacker.equip['range'], 1):
+				print(f"i is {i}")
+				fx = helpers.clamp(attacker_pos[0]+(x_off*i), 1, 10)
+				fy = helpers.clamp(attacker_pos[1]+(y_off*i), 1, 10)
+				map_target = map[fx-1][fy-1]
+				
+				if map_target != 0:
+					print(f"object found at {fx-1},{fy-1}")
+					if isinstance(map_target, arena.Combatant):
+						target = map_target
+						print(f"target found {target.user.mention}")
 			
-			await ctx.send("no target in that direction")
+			if target == 0:
+				await ctx.send("No target in that direction!")
+			else:
+				target.hp -= attacker.equip['damage']
+				check_actions_left()
+				await ctx.send(f"{ctx.author.mention} hit {target.user.mention} for {attacker.equip['damage']} damage!", embed=update_map())
+			
+			for i in combatants:
+				if i.hp <= 0:
+					combatants.remove(i)
+			
+			if len(combatants) <= 1:
+				await set_win(ctx)
+			
 		else:
 			await ctx.send(f"{ctx.author.mention}, it's not your turn!")
 

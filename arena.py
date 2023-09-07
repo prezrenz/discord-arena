@@ -1,5 +1,4 @@
-def clamp(num, min, max):
-	return min if num < min else max if num > max else num
+import helpers
 
 class Combatant():
 	def __init__(self, user, shortcode, x, y, map):
@@ -31,10 +30,10 @@ class Combatant():
 		self.y += int(y)
 		x_num = ord(self.x) - 96
 		x_num += int(x)
-		x_num =clamp(x_num, 1, 10)
+		x_num = helpers.clamp(x_num, 1, 10)
 		
 		self.x = chr(x_num + 96)
-		self.y = clamp(self.y, 1, 10)
+		self.y = helpers.clamp(self.y, 1, 10)
 		
 		if isinstance(map[(ord(self.x) - 96 - 1)][self.y - 1], Weapon):
 			self.equip = map[(ord(self.x) - 96 - 1)][self.y - 1].data
