@@ -6,6 +6,8 @@ import battlemap
 import random
 import helpers
 
+import math
+
 weapons_data = [
 	{"name": "fist", "damage": 1, "range": 1},
 	{"name": "dagger", "damage": 2, "range": 1},
@@ -13,6 +15,13 @@ weapons_data = [
 	{"name": "axe", "damage": 3, "range": 1},
 	{"name": "spear", "damage": 2, "range": 2},
 ]
+
+#cheby distance formula
+# def calculate_distance(pos1, pos2):
+	# return max( [ abs(pos2[0]-pos1[0]), abs(pos2[1]-pos1[1]) ] )
+
+def calculate_distance(pos1, pos2):
+	return abs(pos2[0]-pos1[0]) + abs(pos2[1]-pos1[1])
 
 if __name__ == '__main__':
 	intents = discord.Intents.default()
@@ -34,12 +43,10 @@ if __name__ == '__main__':
 			# url = url + i.put_in_map()
 		# for i in weapons:
 			# url = url + i.put_in_map()
-		
 		for i in map:
 			for j in i:
 				if j != 0:
 					url = url + j.put_in_map()
-		
 		emb.set_image(url=url)
 		return emb
 	
@@ -76,6 +83,7 @@ if __name__ == '__main__':
 		await ctx.send(f"{ctx.author.mention} has won!", embed=update_map())
 		await ctx.send("Battle Ended...")
 		combatants.clear()
+		weapons.clear()
 
 	def check_actions_left():
 		if combatants[current_turn].act > 1:
@@ -121,6 +129,7 @@ if __name__ == '__main__':
 			random.shuffle(combatants)
 			generate_weapons()
 			current_round += 1
+			combatants[0].equip = {"name": "dagger", "damage": 2, "range": 1}
 			await ctx.send("Battle Started...",embed=update_map())
 		elif len(combatants) <= 1:
 			await ctx.send("Needs at least one other combatant!")
@@ -137,6 +146,42 @@ if __name__ == '__main__':
 				await ctx.send(embed=update_map())
 			else:
 				await ctx.send(f"{ctx.author.mention}, you tried moving more than {combatants[current_turn].mov} squares! Please try again...")
+		else:
+			await ctx.send(f"{ctx.author.mention}, it's not your turn!")
+
+	@bot.command()
+	async def throw(ctx, target):
+		if combatants[current_turn].user == ctx.author and combatants[current_turn].equip['name'] == "dagger":
+			map_target = 0
+			
+			for i in combatants:
+				if i.user.mention != combatants[current_turn].user.mention:
+					if i.user.mention == target:
+						map_target = i
+			
+			if map_target != 0:
+				if calculate_distance(combatants[current_turn].get_position(), map_target.get_position()) <= 5:
+					map_target.hp -= combatants[current_turn].equip['damage']
+					check_actions_left()
+					await ctx.send(f"{ctx.author.mention} hit {map_target.user.mention} for {combatants[current_turn].equip['damage']} damage!", embed=update_map())
+					
+					for i in combatants:
+						if i.hp <= 0:
+						combatants.remove(i)
+			
+					if len(combatants) <= 1:
+						await set_win(ctx)
+				else:
+					await ctx.send(f"{target} is out of range of 5 squares!")
+			else:
+				await ctx.send(f"{target} is not in combat, and you can't target yourself!")
+		else:
+			await ctx.send(f"{ctx.author.mention}, it's not your turn!")
+
+	@bot.command()
+	async def shove(ctx, dir):
+		if combatants[current_turn].user == ctx.author and combatants[current_turn].equip['name'] == "axe":
+			pass
 		else:
 			await ctx.send(f"{ctx.author.mention}, it's not your turn!")
 
@@ -214,12 +259,15 @@ if __name__ == '__main__':
 	async def end(ctx):
 		global started
 		global looking
-	
+		
+		global map
+		
 		if ctx.author.guild_permissions.administrator:
 			started = False
 			looking = False
 			combatants.clear()
 			weapons.clear()
+			map = [[0 for i in range(10)] for j in range(10)]
 			
 			await ctx.send("Battle Ended")
 		else:
